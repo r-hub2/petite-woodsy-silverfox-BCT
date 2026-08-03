@@ -10,5 +10,5 @@
 #' @references {W.H. Quinn, V.T. Neal, and S.E. Antunez De Mayolo. El Nino occurrences over the past four and a half centuries. Journal of Geophysical Research: Oceans, 92(C13):14449–14461, 1987.}
 #' (\href{https://agupubs.onlinelibrary.wiley.com/doi/10.1029/JC092iC13p14449}{Quinn})
 #' @references {}
-#' (\href{https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php}{el_nino})s
+#' (\href{https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php}{el_nino})
 "el_nino"

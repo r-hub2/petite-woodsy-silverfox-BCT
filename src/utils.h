@@ -24,8 +24,8 @@ using namespace std;
 
 int m; // alphabet size
 int D; // max depth
-long double beta; // prior hyper-parameter
-long double alpha; // prior hyper-parameter (is function of beta- defined above)
+long double prior_beta; // prior hyper-parameter
+long double alpha; // prior hyper-parameter (is function of prior_beta- defined above)
 unsigned int k_max; //top-k trees for k-bct algorithm
 vector <short> zeros;
 vector <short> xn; // input string transformed into vector
@@ -265,14 +265,14 @@ long double ctw(tree& T) {                   // algorithm takes improper tree an
         
         //calculate weighted log-prob in two cases as explained in notes for numerical precision
         
-        long double delta = T[d][k]->le - sum + log2(beta) - log2(1.0 - beta);
+        long double delta = T[d][k]->le - sum + log2(prior_beta) - log2(1.0 - prior_beta);
         if (delta < 30) {
           
-          T[d][k]->lw = log2(1.0 - beta) + sum + log2(1.0 + pow(2.0, delta));
+          T[d][k]->lw = log2(1.0 - prior_beta) + sum + log2(1.0 + pow(2.0, delta));
           
         }
         else {
-          T[d][k]->lw = log2(beta) + T[d][k]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
+          T[d][k]->lw = log2(prior_beta) + T[d][k]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
           
         }
         
@@ -313,7 +313,7 @@ long double bct(tree& T) {                   // algorithm takes improper tree fi
           if (T[d][k]->child[ch] == NULL) {           // if child #ch does not exist, it is equivalent with
             
             if (d < D - 1) {
-              sum = sum + log2(beta);
+              sum = sum + log2(prior_beta);
             }
             
           }
@@ -330,16 +330,16 @@ long double bct(tree& T) {                   // algorithm takes improper tree fi
         
         
         
-        if (log2(1.0 - 1.0*beta) + sum > log2(beta) + T[d][k]->le) { // maximum achieved by children term
+        if (log2(1.0 - 1.0*prior_beta) + sum > log2(prior_beta) + T[d][k]->le) { // maximum achieved by children term
           
-          T[d][k]->lw = log2(1.0 - 1.0*beta) + sum;                // set max prob of node
+          T[d][k]->lw = log2(1.0 - 1.0*prior_beta) + sum;                // set max prob of node
           
           
         }
         
         else {                                                        // maximum achived by curent node
           
-          T[d][k]->lw = log2(beta) + T[d][k]->le;                  // set max prob of node and mark to be pruned
+          T[d][k]->lw = log2(prior_beta) + T[d][k]->le;                  // set max prob of node and mark to be pruned
           T[d][k]->leaf = 1;
           
           for (short ch = 0; ch < m; ch++) {   // for child # ch of each node
@@ -407,7 +407,7 @@ long double bct(tree& T) {                   // algorithm takes improper tree fi
               init->leaf = 1;                        // denote it leaf
               
               if (d < D - 1) {
-                init->lw = log2(beta);            // set maximal prob for leaf at depth < D, if leaf is at depth D then logP=0;
+                init->lw = log2(prior_beta);            // set maximal prob for leaf at depth < D, if leaf is at depth D then logP=0;
               }
               
               
@@ -513,7 +513,7 @@ void preproc(vector <node *> init) {   // preprocessing needed for k-bct, gives 
   
   for (short d = D - 2; d > -1; d--) {
     
-    init[d]->lm[0] = log2(beta);      // for smaller depth first add c=0 with p=logbeta
+    init[d]->lm[0] = log2(prior_beta);      // for smaller depth first add c=0 with p=logprior_beta
     init[d]->c.push_back(zeros);
     
     
@@ -594,7 +594,7 @@ void comb(int d, int k, tree &T, vector <node *> init) {                   // fi
   
   for (unsigned int i = 0; i < v2.size(); i++) {                  //loop combiantions, keep what is necessary
     
-    double sum = log2(1.0 - beta);
+    double sum = log2(1.0 - prior_beta);
     
     for (unsigned short j = 0; j < v2[i].size(); j++) {
       sum = sum + v2[i][j];                          // sum of log-lm= prod-lm
@@ -710,7 +710,7 @@ void kbct_forw(tree &T, vector <node *> init) { // forward pass of kbct algorith
       
       else {
         
-        T[d][k]->lm[0] = log2(beta) + T[d][k]->le; // for d<D first add the c=0 lm=le combination
+        T[d][k]->lm[0] = log2(prior_beta) + T[d][k]->le; // for d<D first add the c=0 lm=le combination
         T[d][k]->c.push_back(zeros);               // if sth is equal to that it will be stuck below it
         // intuitevely keep c=0 higher to "reward" pruning at ties
         
@@ -838,7 +838,7 @@ void kbct(tree& T, vector <tree> &trees, vector <node *> init, vector <Tree_prop
     
     collect_leaves(trees[i], tp);
     
-    long double prior = log2(pow(alpha, (tp.n_leaves - 1.0))*pow(beta, (tp.n_leaves - trees[i][D].size())));// log-prior
+    long double prior = log2(pow(alpha, (tp.n_leaves - 1.0))*pow(prior_beta, (tp.n_leaves - trees[i][D].size())));// log-prior
     
     
     tp. prior = pow(2, prior);
@@ -893,7 +893,7 @@ void comb_initial3(int d, vector <node *> init) {    // finds combinations from 
   
   for (unsigned int i = 0; i < v2.size(); i++) {
     
-    double sum = log2(1.0 - beta);
+    double sum = log2(1.0 - prior_beta);
     
     for (unsigned short j = 0; j < v2[i].size(); j++) {
       sum = sum + v2[i][j];
@@ -1061,14 +1061,14 @@ Rcpp::NumericVector compute_log_loss(vector<short> xn, int train_size) {
         }
         //calculate weighted log-prob in two cases (for numerical precision)
         
-        long double delta = nodes_ct[d]->le - sum + log2(beta) - log2(1.0 - beta);
+        long double delta = nodes_ct[d]->le - sum + log2(prior_beta) - log2(1.0 - prior_beta);
         if (delta < 30) {
           
-          nodes_ct[d]->lw = log2(1.0 - beta) + sum + log2(1.0 + pow(2.0, delta));
+          nodes_ct[d]->lw = log2(1.0 - prior_beta) + sum + log2(1.0 + pow(2.0, delta));
           
         }
         else {
-          nodes_ct[d]->lw = log2(beta) + nodes_ct[d]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
+          nodes_ct[d]->lw = log2(prior_beta) + nodes_ct[d]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
           
         }
         
@@ -1173,24 +1173,24 @@ void set_param_with_alphabet(string &s, int depth, string &given_alphabet){ // j
 // ======================================================================================================
 void set_global_parameters(string &s, int depth, short kmax){ // after reading and encoding the input dataset, the global parameters are fixed 
   set_param(s, depth, kmax);
-  beta = 1 - pow(2, -(m - 1)); // default value for the prior hyper-parameter
-  alpha = pow((1.0 - beta), (1.0 / (m - 1.0)));
+  prior_beta = 1 - pow(2, -(m - 1)); // default value for the prior hyper-parameter
+  alpha = pow((1.0 - prior_beta), (1.0 / (m - 1.0)));
 }
 // ======================================================================================================
 void set_global_parameters(string &s, int depth, short kmax, double b){
   set_param(s, depth, kmax);
   if(b>0 && b<1)
-    beta = b;   // for a custom beta.
+    prior_beta = b;   // for a custom prior_beta.
   else
-    beta = 1 - pow(2, -(m - 1));
-  alpha = pow((1.0 - beta), (1.0 / (m - 1.0)));
+    prior_beta = 1 - pow(2, -(m - 1));
+  alpha = pow((1.0 - prior_beta), (1.0 / (m - 1.0)));
 }
 // ======================================================================================================
 
 void set_global_parameters_with_alphabet(string &s, int depth, short kmax, string &given_alphabet){ // after reading and encoding the input dataset, the global parameters are fixed 
   set_param_with_alphabet(s, depth, given_alphabet);
-  beta = 1 - pow(2, -(m - 1)); // default value for the prior hyper-parameter
-  alpha = pow((1.0 - beta), (1.0 / (m - 1.0)));
+  prior_beta = 1 - pow(2, -(m - 1)); // default value for the prior hyper-parameter
+  alpha = pow((1.0 - prior_beta), (1.0 / (m - 1.0)));
 }
 
 
@@ -1198,10 +1198,10 @@ void set_global_parameters_with_alphabet(string &s, int depth, short kmax, strin
 void set_global_parameters_with_alphabet(string &s, int depth, short kmax, string &given_alphabet, double b){
   set_param_with_alphabet(s, depth, given_alphabet);
   if(b>0 && b<1)
-    beta = b;   // for a custom beta.
+    prior_beta = b;   // for a custom prior_beta.
   else
-    beta = 1 - pow(2, -(m - 1));
-  alpha = pow((1.0 - beta), (1.0 / (m - 1.0)));
+    prior_beta = 1 - pow(2, -(m - 1));
+  alpha = pow((1.0 - prior_beta), (1.0 / (m - 1.0)));
 }
 
 
@@ -1395,7 +1395,7 @@ void ctw_bct(tree& T, Tree_properties & tp) {
   label(T2); //add contexts to nodes
   
   collect_leaves(T2, tp);
-  long double prior = log2(pow(alpha, (tp.n_leaves - 1.0)) * pow(beta, (tp.n_leaves - T2[D].size()))); // log-prior
+  long double prior = log2(pow(alpha, (tp.n_leaves - 1.0)) * pow(prior_beta, (tp.n_leaves - T2[D].size()))); // log-prior
   
   tp.prior = pow(2, prior);
   tp.log_prior = prior;
@@ -1590,14 +1590,14 @@ Rcpp::List online_predict( int train_size) {
           
           //calculate weighted log-prob in two cases (for numerical precision)
           
-          long double delta = nodes_ct[d]->le - sum + log2(beta) - log2(1.0 - beta);
+          long double delta = nodes_ct[d]->le - sum + log2(prior_beta) - log2(1.0 - prior_beta);
           if (delta < 30) {
             
-            nodes_ct[d]->lw = log2(1.0 - beta) + sum + log2(1.0 + pow(2.0, delta));
+            nodes_ct[d]->lw = log2(1.0 - prior_beta) + sum + log2(1.0 + pow(2.0, delta));
             
           }
           else {
-            nodes_ct[d]->lw = log2(beta) + nodes_ct[d]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
+            nodes_ct[d]->lw = log2(prior_beta) + nodes_ct[d]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
           }
         }
       }
@@ -1670,14 +1670,14 @@ Rcpp::List online_predict( int train_size) {
         
         //calculate weighted log-prob in two cases (for numerical precision)
         
-        long double delta = nodes_ct[d]->le - sum + log2(beta) - log2(1.0 - beta);
+        long double delta = nodes_ct[d]->le - sum + log2(prior_beta) - log2(1.0 - prior_beta);
         if (delta < 30) {
           
-          nodes_ct[d]->lw = log2(1.0 - beta) + sum + log2(1.0 + pow(2.0, delta));
+          nodes_ct[d]->lw = log2(1.0 - prior_beta) + sum + log2(1.0 + pow(2.0, delta));
           
         }
         else {
-          nodes_ct[d]->lw = log2(beta) + nodes_ct[d]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
+          nodes_ct[d]->lw = log2(prior_beta) + nodes_ct[d]->le + log2(exp(1))*(pow(2.0, -delta) - pow(2.0, -2.0*delta - 1));
         }
       }
       

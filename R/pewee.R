@@ -12,10 +12,8 @@
 #'
 #' @keywords datasets
 #'
-#'
 #' @references {W. Craig. The song of the wood pewee (Myiochanes virens Linnaeus): A study of bird music. New York State Museum Bulletin No. 334. University of the State of New York, Albany, NY, 1943.}
-#' (\href{https://www.worldcat.org/title/song-of-the-wood-pewee-myiochanes-virens-linnaeus-a-study-of-bird-music/oclc/2133859}{craig}) 
-#' 
+#' (\href{https://search.worldcat.org/title/song-of-the-wood-pewee-myiochanes-virens-linnaeus-a-study-of-bird-music/oclc/2133859}{craig})
 #'
 #' @examples
 #' BCT(pewee, 5)
