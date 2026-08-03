@@ -22,7 +22,7 @@ LinkingTo: Rcpp
 Depends: R (>= 4.0)
 RoxygenNote: 7.3.3
 NeedsCompilation: yes
-Packaged: 2026-08-03 10:03:31 UTC; Valentinian
+Packaged: 2026-08-03 10:38:12 UTC; Valentinian
 Repository: CRAN
 Date/Publication: 2022-05-12 14:00:05 UTC
 Author: Ioannis Papageorgiou [aut],
